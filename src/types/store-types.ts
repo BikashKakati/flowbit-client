@@ -1,7 +1,8 @@
 import type { AppNode, CustomEdge } from './index';
 import type { Tool } from './zustand-types';
 import type { NodeChange, EdgeChange, Connection, Position } from '@xyflow/react';
-import type { FlowHistoryState } from '../services/api/history-service';
+import type { FlowHistoryState } from '../services/local/history-service';
+
 
 export interface CanvasSlice {
   nodes: AppNode[];
@@ -51,7 +52,7 @@ export interface HistorySlice {
   activeFlowId: string | null;
   past: FlowHistoryState[];
   future: FlowHistoryState[];
-  setActiveFlow: (flowId: string) => void;
+  setActiveFlow: (flowId: string) => void | Promise<void>;
   commitHistory: () => void;
   undoHistory: () => void;
   redoHistory: () => void;

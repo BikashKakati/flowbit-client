@@ -1,18 +1,25 @@
 import type { StateCreator } from 'zustand';
 import type { EditorStoreType, HistorySlice } from '../../types/store-types';
 import {
-    setActiveFlowAction,
     commitHistoryAction,
     undoHistoryAction,
-    redoHistoryAction
+    redoHistoryAction,
 } from '../actions/history-actions';
+import { HistoryService } from '../../services/local/history-service';
 
 export const createHistorySlice: StateCreator<EditorStoreType, [], [], HistorySlice> = (set, _get) => ({
     activeFlowId: null,
     past: [],
     future: [],
 
-    setActiveFlow: (flowId) => set((state: EditorStoreType) => setActiveFlowAction(state, flowId)),
+    setActiveFlow: async (flowId) => {
+        const history = await HistoryService.getHistory(flowId);
+        set({
+            activeFlowId: flowId,
+            past: history.past,
+            future: history.future,
+        });
+    },
     commitHistory: () => set((state: EditorStoreType) => commitHistoryAction(state)),
     undoHistory: () => set((state: EditorStoreType) => undoHistoryAction(state)),
     redoHistory: () => set((state: EditorStoreType) => redoHistoryAction(state)),

@@ -1,4 +1,4 @@
-import { apiClient } from "../../config/api-client";
+import { FlowRepository } from "../storage/repository";
 
 export interface FlowMetadata {
   id: string;
@@ -11,22 +11,24 @@ export interface FlowMetadata {
 
 export const FlowService = {
   getFlowsBySpace: async (spaceId: string): Promise<FlowMetadata[]> => {
-    const response = await apiClient.get<{ success: boolean, message: string, data: FlowMetadata[] }>(`/spaces/${spaceId}/flows`);
-    return response.data.data;
+    return await FlowRepository.getFlowsBySpace(spaceId);
   },
 
   createFlow: async (spaceId: string, id: string, name: string): Promise<FlowMetadata> => {
-    const response = await apiClient.post<{ success: boolean, message: string, data: FlowMetadata }>(`/spaces/${spaceId}/flows`, { id, name });
-    return response.data.data;
+    return await FlowRepository.createFlow(spaceId, id, name);
   },
 
   updateFlowName: async (id: string, name: string): Promise<FlowMetadata> => {
-    const response = await apiClient.put<{ success: boolean, message: string, data: FlowMetadata }>(`/flows/${id}/name`, { name });
-    return response.data.data;
+    return await FlowRepository.updateFlowName(id, name);
   },
 
   deleteFlow: async (id: string): Promise<boolean> => {
-    const response = await apiClient.delete<{ success: boolean }>(`/flows/${id}`);
-    return response.data.success;
+    try {
+      await FlowRepository.deleteFlow(id);
+      return true;
+    } catch (err) {
+      console.error("Failed to delete flow", err);
+      return false;
+    }
   }
 };

@@ -1,4 +1,4 @@
-import { apiClient } from "../../config/api-client";
+import { SpaceRepository } from "../storage/repository";
 
 export interface Space {
   id: string;
@@ -10,22 +10,24 @@ export interface Space {
 
 export const SpaceService = {
   getSpaces: async (): Promise<Space[]> => {
-    const response = await apiClient.get<{ success: boolean, message: string, data: Space[] }>('/spaces');
-    return response.data.data;
+    return await SpaceRepository.getSpaces();
   },
 
   createSpace: async (id: string, name: string): Promise<Space> => {
-    const response = await apiClient.post<{ success: boolean, message: string, data: Space }>('/spaces', { id, name });
-    return response.data.data;
+    return await SpaceRepository.createSpace(id, name);
   },
 
   updateSpace: async (id: string, newName: string): Promise<Space> => {
-    const response = await apiClient.put<{ success: boolean, message: string, data: Space }>(`/spaces/${id}`, { name: newName });
-    return response.data.data;
+    return await SpaceRepository.updateSpace(id, newName);
   },
 
   deleteSpace: async (id: string): Promise<boolean> => {
-    const response = await apiClient.delete<{ success: boolean }>(`/spaces/${id}`);
-    return response.data.success;
+    try {
+      await SpaceRepository.deleteSpace(id);
+      return true;
+    } catch (err) {
+      console.error("Failed to delete space", err);
+      return false;
+    }
   }
 };

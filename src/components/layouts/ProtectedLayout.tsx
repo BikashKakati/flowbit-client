@@ -1,11 +1,7 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuthStore } from "../../store/auth-store";
+import { Outlet } from "react-router-dom";
 
 export default function ProtectedLayout() {
-    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-    if (!isAuthenticated) return <Navigate to="/login" replace />;
-
+    // Guest-first flow: Allow access to /space, /editor/:id, and /settings without authentication
     return (
         <Outlet />
     );

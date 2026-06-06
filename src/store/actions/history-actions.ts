@@ -1,17 +1,10 @@
-import { HistoryService, type FlowHistoryState } from '../../services/api/history-service';
+import { HistoryService, type FlowHistoryState } from '../../services/local/history-service';
 import type { EditorStoreType } from '../../types/store-types';
 
 const MAX_HISTORY = 50;
 
-export const setActiveFlowAction = (state: EditorStoreType, flowId: string): Partial<EditorStoreType> => {
-    if (state.activeFlowId === flowId) return {};
-    const history = HistoryService.getHistory(flowId);
-    return {
-        activeFlowId: flowId,
-        past: history.past,
-        future: history.future,
-    };
-};
+// Note: setActiveFlowAction is now handled directly inside history-slice.ts asynchronously
+
 
 export const commitHistoryAction = (state: EditorStoreType): Partial<EditorStoreType> => {
     if (!state.activeFlowId) return {};

@@ -1,6 +1,6 @@
-import { apiClient } from "../../config/api-client";
 import type { Node, Edge } from '@xyflow/react';
 import { debounce } from '../../utils/debounce';
+import { CanvasRepository } from '../storage/repository';
 
 export interface CanvasData {
     nodes: Node[];
@@ -10,17 +10,14 @@ export interface CanvasData {
 
 class CanvasServiceClass {
     async getCanvasContent(flowId: string): Promise<CanvasData> {
-        const response = await apiClient.get<{ success: boolean, message: string, data: CanvasData }>(`/flows/${flowId}/canvas`);
-        return response.data.data;
+        return await CanvasRepository.getCanvasContent(flowId) as any;
     }
 
     async saveCanvasContent(flowId: string, nodes: Node[], edges: Edge[]): Promise<{ success: boolean, updatedAt: string }> {
-        const response = await apiClient.post<{ success: boolean, message: string, data: { success: boolean, updatedAt: string } }>(`/flows/${flowId}/canvas`, { nodes, edges });
-        return response.data.data;
+        await CanvasRepository.saveCanvasContent(flowId, nodes as any, edges as any);
+        return { success: true, updatedAt: new Date().toISOString() };
     }
 
-    // Debounced version of saveCanvasContent using our local generic debounce utility.
-    // It creates a debounced function per flowId to avoid clashing.
     private debouncedSavers: Record<string, (...args: any[]) => void> = {};
 
     saveCanvasContentDebounced(flowId: string, nodes: Node[], edges: Edge[], delay: number = 2000, onSuccess?: () => void): void {
@@ -28,7 +25,6 @@ class CanvasServiceClass {
             this.debouncedSavers[flowId] = debounce(
                 async (fId: string, n: Node[], e: Edge[], callback?: () => void) => {
                     try {
-                        // Clean memory here ONLY right before saving! Protects 60fps rendering frame-rate loop.
                         const cleanNodes = n.map((node: any) => {
                             const { selected, dragging, measured, positionAbsolute, ...rest } = node;
                             return rest;

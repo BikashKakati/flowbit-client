@@ -1,4 +1,4 @@
-import { ArrowRight, FolderOpen, Plus } from "lucide-react";
+import { ArrowRight, FolderOpen, Plus, Sparkles, Settings, LogOut } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -7,11 +7,20 @@ import { FlowbitLogo } from "../../components/icons/Logo";
 import { FlowService } from "../../services/api/flow-service";
 import { SpaceService } from "../../services/api/space-service";
 import { useWorkspaceStore } from "../../store/workspace-store";
+import { useAuthStore } from "../../store/auth-store";
+import UpgradeModal from "../../components/common/UpgradeModal";
 
 export default function SpacePage() {
     const navigate = useNavigate();
     const { spaces, activeSpaceId, setSpaces, setActiveSpaceId, addSpace, addFlow, getFlowsBySpaceId, hasFetchedFlowsForSpace, setFlowsForSpace } = useWorkspaceStore();
     const flows = activeSpaceId ? getFlowsBySpaceId(activeSpaceId) : [];
+
+    const { isAuthenticated, user, logout } = useAuthStore();
+    const globalFlowsCount = useWorkspaceStore(state => state.flows.length);
+
+    // Limit modal states
+    const [isUpgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [upgradeLimitType, setUpgradeLimitType] = useState<'space' | 'flow'>('space');
 
     // Modal states
     const [isSpaceModalOpen, setSpaceModalOpen] = useState(false);
@@ -31,15 +40,29 @@ export default function SpacePage() {
             try {
                 const loadedSpaces = await SpaceService.getSpaces();
                 setSpaces(loadedSpaces);
-                if (loadedSpaces.length > 0 && !activeSpaceId) {
-                    const firstSpaceId = loadedSpaces[0].id;
+                if (loadedSpaces.length > 0) {
+                    const firstSpaceId = activeSpaceId || loadedSpaces[0].id;
                     setActiveSpaceId(firstSpaceId);
-                    if (!hasFetchedFlowsForSpace(firstSpaceId)) {
-                        try {
-                            const spaceFlows = await FlowService.getFlowsBySpace(firstSpaceId);
-                            setFlowsForSpace(firstSpaceId, spaceFlows);
-                        } catch (err) {
-                            console.error("Failed to load flows", err);
+                    
+                    // For guests, prefetch flows for all spaces immediately to compute global limits accurately
+                    if (!isAuthenticated) {
+                        for (const space of loadedSpaces) {
+                            try {
+                                const spaceFlows = await FlowService.getFlowsBySpace(space.id);
+                                setFlowsForSpace(space.id, spaceFlows);
+                            } catch (err) {
+                                console.error("Failed to prefetch guest flows", err);
+                            }
+                        }
+                    } else {
+                        // Authenticated
+                        if (!hasFetchedFlowsForSpace(firstSpaceId)) {
+                            try {
+                                const spaceFlows = await FlowService.getFlowsBySpace(firstSpaceId);
+                                setFlowsForSpace(firstSpaceId, spaceFlows);
+                            } catch (err) {
+                                console.error("Failed to load flows", err);
+                            }
                         }
                     }
                 }
@@ -54,6 +77,15 @@ export default function SpacePage() {
     const handleCreateSpace = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newSpaceName.trim()) return;
+
+        // Guest limit check: max 3 spaces
+        if (!isAuthenticated && spaces.length >= 3) {
+            setSpaceModalOpen(false);
+            setUpgradeLimitType('space');
+            setUpgradeModalOpen(true);
+            return;
+        }
+
         try {
             const s = await SpaceService.createSpace(uuidv4(), newSpaceName.trim());
             addSpace(s);
@@ -69,6 +101,15 @@ export default function SpacePage() {
     const handleCreateFlow = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newFlowName.trim() || !activeSpaceId) return;
+
+        // Guest limit check: max 6 flows globally
+        if (!isAuthenticated && globalFlowsCount >= 6) {
+            setFlowModalOpen(false);
+            setUpgradeLimitType('flow');
+            setUpgradeModalOpen(true);
+            return;
+        }
+
         try {
             const f = await FlowService.createFlow(activeSpaceId, uuidv4(), newFlowName.trim());
             addFlow(f);
@@ -79,6 +120,7 @@ export default function SpacePage() {
             console.error("Failed to create flow", err);
         }
     };
+
     const handleSelectSpace = async (selectedSpaceId: string) => {
         if (selectedSpaceId === activeSpaceId) {
             return;
@@ -138,6 +180,82 @@ export default function SpacePage() {
                             ))
                         )}
                     </div>
+                </div>
+
+                {/* Bottom section of sidebar for user profile/guest status and navigation */}
+                <div className="p-4 border-t border-slate-800/80 bg-slate-950/60 flex flex-col gap-3">
+                    {isAuthenticated && user ? (
+                        <>
+                            {/* User Profile Info */}
+                            <div className="flex items-center gap-3 px-2 py-1">
+                                <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white uppercase text-sm shadow-inner shadow-indigo-400/30 select-none">
+                                    {user.name ? user.name.charAt(0) : 'U'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-slate-200 truncate">{user.name}</p>
+                                    <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                                </div>
+                            </div>
+
+                            {/* Quick Action row */}
+                            <div className="flex items-center gap-2 mt-1">
+                                <Link
+                                    to="/settings"
+                                    className="flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700 transition-all"
+                                >
+                                    <Settings size={14} />
+                                    <span>Settings</span>
+                                </Link>
+                                <button
+                                    onClick={() => {
+                                        logout();
+                                        navigate('/');
+                                    }}
+                                    className="p-1.5 rounded-lg bg-red-950/20 hover:bg-red-950/40 text-red-400 hover:text-red-300 border border-red-950/30 hover:border-red-900/50 transition-all"
+                                    title="Log Out"
+                                >
+                                    <LogOut size={14} />
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Guest stats card */}
+                            <div className="bg-slate-900/60 border border-indigo-500/10 rounded-xl p-3">
+                                <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold mb-2">
+                                    <Sparkles size={14} className="animate-pulse" />
+                                    <span>Guest Session</span>
+                                </div>
+                                <div className="text-[11px] text-slate-400 space-y-1">
+                                    <div className="flex justify-between">
+                                        <span>Spaces:</span> 
+                                        <span className="font-semibold text-slate-200">{spaces.length} / 3</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Flows:</span> 
+                                        <span className="font-semibold text-slate-200">{globalFlowsCount} / 6</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action row for Guest */}
+                            <div className="flex items-center gap-2">
+                                <Link
+                                    to="/login"
+                                    className="flex-1 text-center text-xs font-semibold py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all shadow-md shadow-indigo-500/10"
+                                >
+                                    Sign In
+                                </Link>
+                                <Link
+                                    to="/settings"
+                                    className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 hover:border-slate-700 transition-all"
+                                    title="Settings"
+                                >
+                                    <Settings size={14} />
+                                </Link>
+                            </div>
+                        </>
+                    )}
                 </div>
             </aside>
 
@@ -256,6 +374,13 @@ export default function SpacePage() {
                     </form>
                 </div>
             )}
+
+            {/* UPGRADE PROMPT MODAL */}
+            <UpgradeModal
+                isOpen={isUpgradeModalOpen}
+                onClose={() => setUpgradeModalOpen(false)}
+                limitType={upgradeLimitType}
+            />
 
         </div>
     );
