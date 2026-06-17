@@ -6,7 +6,6 @@ import type { Space } from '../api/space-service';
 import type { FlowMetadata } from '../api/flow-service';
 import type { CanvasData } from '../api/canvas-service';
 import { useWorkspaceStore } from '../../store/workspace-store';
-import { apiClient } from '../../config/api-client';
 
 class ConnectivityTracker {
   private isOnlineStatus: boolean = typeof navigator !== 'undefined' ? navigator.onLine : true;
@@ -74,20 +73,22 @@ class SyncManagerClass {
 
         try {
           if (op.entityType === 'space') {
-            if (op.action === 'create' || op.action === 'update') {
-              await remoteDriver.set('spaces', op.entityId, op.payload);
+            if (op.action === 'create') {
+              await remoteDriver.createSpace(op.entityId, op.payload.name);
+            } else if (op.action === 'update') {
+              await remoteDriver.updateSpace(op.entityId, op.payload.name);
             } else if (op.action === 'delete') {
-              await remoteDriver.delete('spaces', op.entityId);
+              await remoteDriver.deleteSpace(op.entityId);
             }
             // Successful upload: Delete local IndexedDB copy to maintain clean online-first database state
             await indexedDBDriver.delete('spaces', op.entityId);
           } else if (op.entityType === 'flow') {
             if (op.action === 'create') {
-              await remoteDriver.set('flows', op.entityId, op.payload);
+              await remoteDriver.createFlow(op.payload.spaceId, op.entityId, op.payload.name);
             } else if (op.action === 'update') {
-              await remoteDriver.set('flows', op.entityId, op.payload);
+              await remoteDriver.updateFlowName(op.entityId, op.payload.name);
             } else if (op.action === 'delete') {
-              await remoteDriver.delete('flows', op.entityId);
+              await remoteDriver.deleteFlow(op.entityId);
             }
             // Clean up IndexedDB
             await indexedDBDriver.delete('flows', op.entityId);
@@ -96,7 +97,7 @@ class SyncManagerClass {
             }
           } else if (op.entityType === 'canvas') {
             if (op.action === 'create') {
-              await remoteDriver.set('canvas', op.entityId, op.payload);
+              await remoteDriver.saveCanvas(op.entityId, op.payload.nodes, op.payload.edges);
             }
             // Clean up IndexedDB
             await indexedDBDriver.delete('canvas', op.entityId);
@@ -128,34 +129,45 @@ class SyncManagerClass {
   async migrateGuestData(): Promise<void> {
     console.log("[SyncManager] Initiating guest-to-account migration...");
     try {
-      // 1. Query all local guest spaces, flows, and canvases
+      // 1. Fetch the user's existing remote spaces from MongoDB first
+      const remoteSpaces = await remoteDriver.getSpaces().catch(() => []);
+
+      // 2. Query all local guest spaces, flows, and canvases
       const guestSpaces = await indexedDBDriver.query<Space>('spaces', s => s.userId === 'guest' || !s.userId);
       const guestFlows = await indexedDBDriver.query<FlowMetadata>('flows', f => f.userId === 'guest' || !f.userId);
 
       const migratedSpaces: Space[] = [];
       const migratedFlows: FlowMetadata[] = [];
 
-      // 2. Upload guest data to remote database
+      // 3. Upload guest data to remote database
       if (guestSpaces.length > 0) {
         for (const space of guestSpaces) {
+          const spaceFlows = guestFlows.filter(f => f.spaceId === space.id);
+
+          // Discard empty auto-created "Default Space" or "Untitled Space" if remote spaces already exist
+          const isDefaultEmpty = (space.name === "Default Space" || space.name === "Untitled Space") && spaceFlows.length === 0;
+          if (remoteSpaces.length > 0 && isDefaultEmpty) {
+            console.log(`[SyncManager] Discarding empty guest space: ${space.name} (${space.id}) as remote spaces exist.`);
+            continue;
+          }
+
           console.log(`[SyncManager] Migrating space: ${space.name} (${space.id})`);
           try {
-            await remoteDriver.set('spaces', space.id, { name: space.name });
+            await remoteDriver.createSpace(space.id, space.name);
             migratedSpaces.push(space);
           } catch (err) {
             console.error(`[SyncManager] Failed to migrate space ${space.id} to remote`, err);
           }
 
-          const spaceFlows = guestFlows.filter(f => f.spaceId === space.id);
           for (const flow of spaceFlows) {
             console.log(`[SyncManager] Migrating flow: ${flow.name} (${flow.id})`);
             try {
-              await remoteDriver.set('flows', flow.id, { spaceId: space.id, name: flow.name });
+              await remoteDriver.createFlow(space.id, flow.id, flow.name);
               migratedFlows.push(flow);
               
               const canvas = await indexedDBDriver.get<CanvasData>('canvas', flow.id);
               if (canvas) {
-                await remoteDriver.set('canvas', flow.id, { nodes: canvas.nodes, edges: canvas.edges });
+                await remoteDriver.saveCanvas(flow.id, canvas.nodes, canvas.edges);
               }
             } catch (err) {
               console.error(`[SyncManager] Failed to migrate flow ${flow.id} to remote`, err);
@@ -163,7 +175,7 @@ class SyncManagerClass {
           }
         }
 
-        // 3. Clear IndexedDB guest data & history from LocalStorage
+        // Clear IndexedDB guest data & history from LocalStorage
         for (const space of guestSpaces) {
           await indexedDBDriver.delete('spaces', space.id);
         }
@@ -173,9 +185,6 @@ class SyncManagerClass {
           localStorageDriver.delete('history', flow.id);
         }
       }
-
-      // 4. Fetch the user's existing remote spaces and flows from MongoDB
-      const remoteSpaces = await remoteDriver.getAll<Space>('spaces');
       
       let allFlows = [...migratedFlows];
       const fetchedSpaceIds: string[] = [];
@@ -190,8 +199,7 @@ class SyncManagerClass {
 
       for (const space of allSpaces) {
         try {
-          const res = await apiClient.get<{ success: boolean, data: FlowMetadata[] }>(`/spaces/${space.id}/flows`);
-          const spaceFlows = res.data.data;
+          const spaceFlows = await remoteDriver.getFlows(space.id);
           // Merge flows avoiding duplicates
           for (const sf of spaceFlows) {
             if (!allFlows.some(f => f.id === sf.id)) {

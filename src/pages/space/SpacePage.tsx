@@ -1,4 +1,4 @@
-import { ArrowRight, FolderOpen, Plus, Sparkles, Settings, LogOut } from "lucide-react";
+import { ArrowRight, FolderOpen, Plus, Sparkles, Settings, LogOut, Pencil, Trash2 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -12,7 +12,21 @@ import UpgradeModal from "../../components/common/UpgradeModal";
 
 export default function SpacePage() {
     const navigate = useNavigate();
-    const { spaces, activeSpaceId, setSpaces, setActiveSpaceId, addSpace, addFlow, getFlowsBySpaceId, hasFetchedFlowsForSpace, setFlowsForSpace } = useWorkspaceStore();
+    const { 
+        spaces, 
+        activeSpaceId, 
+        setSpaces, 
+        setActiveSpaceId, 
+        addSpace, 
+        addFlow, 
+        getFlowsBySpaceId, 
+        hasFetchedFlowsForSpace, 
+        setFlowsForSpace,
+        updateSpace,
+        deleteSpace,
+        updateFlow,
+        deleteFlow
+    } = useWorkspaceStore();
     const flows = activeSpaceId ? getFlowsBySpaceId(activeSpaceId) : [];
 
     const { isAuthenticated, user, logout } = useAuthStore();
@@ -22,12 +36,12 @@ export default function SpacePage() {
     const [isUpgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [upgradeLimitType, setUpgradeLimitType] = useState<'space' | 'flow'>('space');
 
-    // Modal states
-    const [isSpaceModalOpen, setSpaceModalOpen] = useState(false);
-    const [newSpaceName, setNewSpaceName] = useState("");
+    // Inline edit states
+    const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null);
+    const [editingSpaceName, setEditingSpaceName] = useState("");
 
-    const [isFlowModalOpen, setFlowModalOpen] = useState(false);
-    const [newFlowName, setNewFlowName] = useState("");
+    const [editingFlowId, setEditingFlowId] = useState<string | null>(null);
+    const [editingFlowName, setEditingFlowName] = useState("");
 
     useEffect(() => {
         const loadSpaces = async () => {
@@ -65,6 +79,14 @@ export default function SpacePage() {
                             }
                         }
                     }
+                } else {
+                    // Create default space behind the scenes if no space is available
+                    const newSpaceId = uuidv4();
+                    const defaultSpaceName = "Default Space";
+                    const s = await SpaceService.createSpace(newSpaceId, defaultSpaceName);
+                    addSpace(s);
+                    setActiveSpaceId(s.id);
+                    setFlowsForSpace(s.id, []);
                 }
             } catch (err) {
                 console.error("Failed to load spaces", err);
@@ -74,50 +96,157 @@ export default function SpacePage() {
     }, []);
 
 
-    const handleCreateSpace = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newSpaceName.trim()) return;
-
+    const handleCreateSpace = async () => {
         // Guest limit check: max 3 spaces
         if (!isAuthenticated && spaces.length >= 3) {
-            setSpaceModalOpen(false);
             setUpgradeLimitType('space');
             setUpgradeModalOpen(true);
             return;
         }
 
         try {
-            const s = await SpaceService.createSpace(uuidv4(), newSpaceName.trim());
+            const newId = uuidv4();
+            const defaultSpaceName = "Untitled Space";
+            const s = await SpaceService.createSpace(newId, defaultSpaceName);
             addSpace(s);
             setActiveSpaceId(s.id);
             setFlowsForSpace(s.id, []);
-            setNewSpaceName("");
-            setSpaceModalOpen(false);
+            
+            // Enter edit mode for the newly created space immediately
+            setEditingSpaceId(s.id);
+            setEditingSpaceName(defaultSpaceName);
         } catch (err) {
             console.error("Failed to create space", err);
         }
     };
 
-    const handleCreateFlow = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newFlowName.trim() || !activeSpaceId) return;
+    const handleCreateFlow = async () => {
+        if (!activeSpaceId) return;
 
         // Guest limit check: max 6 flows globally
         if (!isAuthenticated && globalFlowsCount >= 6) {
-            setFlowModalOpen(false);
             setUpgradeLimitType('flow');
             setUpgradeModalOpen(true);
             return;
         }
 
         try {
-            const f = await FlowService.createFlow(activeSpaceId, uuidv4(), newFlowName.trim());
+            const newId = uuidv4();
+            const defaultFlowName = "Untitled Flow";
+            const f = await FlowService.createFlow(activeSpaceId, newId, defaultFlowName);
             addFlow(f);
-            setNewFlowName("");
-            setFlowModalOpen(false);
             navigate(`/editor/${f.id}`);
         } catch (err) {
             console.error("Failed to create flow", err);
+        }
+    };
+
+    const startEditingSpace = (spaceId: string, name: string) => {
+        setEditingSpaceId(spaceId);
+        setEditingSpaceName(name);
+    };
+
+    const finishEditingSpace = async (spaceId: string) => {
+        if (!editingSpaceName.trim()) {
+            setEditingSpaceId(null);
+            return;
+        }
+
+        const trimmed = editingSpaceName.trim();
+        const space = spaces.find(s => s.id === spaceId);
+        if (space && space.name === trimmed) {
+            setEditingSpaceId(null);
+            return;
+        }
+
+        updateSpace(spaceId, trimmed);
+        setEditingSpaceId(null);
+
+        try {
+            await SpaceService.updateSpace(spaceId, trimmed);
+        } catch (err) {
+            console.error("Failed to update space name", err);
+        }
+    };
+
+    const cancelEditingSpace = () => {
+        setEditingSpaceId(null);
+    };
+
+    const handleDeleteSpace = async (spaceId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const confirmDelete = window.confirm("Are you sure you want to delete this space and all its flows?");
+        if (!confirmDelete) return;
+
+        const prevSpaces = [...spaces];
+        const prevActiveId = activeSpaceId;
+
+        deleteSpace(spaceId);
+
+        try {
+            await SpaceService.deleteSpace(spaceId);
+
+            const currentSpaces = useWorkspaceStore.getState().spaces;
+            if (currentSpaces.length === 0) {
+                const newId = uuidv4();
+                const defaultSpace = await SpaceService.createSpace(newId, "Default Space");
+                addSpace(defaultSpace);
+                setActiveSpaceId(defaultSpace.id);
+                setFlowsForSpace(defaultSpace.id, []);
+            }
+        } catch (err) {
+            console.error("Failed to delete space", err);
+            setSpaces(prevSpaces);
+            setActiveSpaceId(prevActiveId);
+        }
+    };
+
+    const startEditingFlow = (flowId: string, name: string) => {
+        setEditingFlowId(flowId);
+        setEditingFlowName(name);
+    };
+
+    const finishEditingFlow = async (flowId: string) => {
+        if (!editingFlowName.trim()) {
+            setEditingFlowId(null);
+            return;
+        }
+
+        const trimmed = editingFlowName.trim();
+        const flow = flows.find(f => f.id === flowId);
+        if (flow && flow.name === trimmed) {
+            setEditingFlowId(null);
+            return;
+        }
+
+        updateFlow(flowId, trimmed);
+        setEditingFlowId(null);
+
+        try {
+            await FlowService.updateFlowName(flowId, trimmed);
+        } catch (err) {
+            console.error("Failed to update flow name", err);
+        }
+    };
+
+    const cancelEditingFlow = () => {
+        setEditingFlowId(null);
+    };
+
+    const handleDeleteFlow = async (flowId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const confirmDelete = window.confirm("Are you sure you want to delete this flow?");
+        if (!confirmDelete) return;
+
+        const prevFlows = [...useWorkspaceStore.getState().flows];
+
+        deleteFlow(flowId);
+
+        try {
+            await FlowService.deleteFlow(flowId);
+        } catch (err) {
+            console.error("Failed to delete flow", err);
+            useWorkspaceStore.setState({ flows: prevFlows });
         }
     };
 
@@ -154,7 +283,7 @@ export default function SpacePage() {
                 <div className="flex-1 overflow-y-auto px-4 py-6">
                     <div className="flex items-center justify-between mb-4 px-2">
                         <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Your Spaces</h2>
-                        <button onClick={() => setSpaceModalOpen(true)} className="text-slate-400 hover:text-indigo-400 transition-colors p-1 rounded-md hover:bg-slate-800">
+                        <button onClick={handleCreateSpace} className="text-slate-400 hover:text-indigo-400 transition-colors p-1 rounded-md hover:bg-slate-800">
                             <Plus className="w-4 h-4" />
                         </button>
                     </div>
@@ -163,21 +292,68 @@ export default function SpacePage() {
                         {spaces.length === 0 ? (
                             <p className="px-2 text-sm text-slate-500 italic">No spaces yet.</p>
                         ) : (
-                            spaces.map(s => (
-                                <button
-                                    key={s.id}
-                                    onClick={() => { handleSelectSpace(s.id) }}
-                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${activeSpaceId === s.id
-                                        ? "bg-indigo-500/10 text-indigo-400"
-                                        : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
+                            spaces.map(s => {
+                                const isEditing = editingSpaceId === s.id;
+                                const isActive = activeSpaceId === s.id;
+                                return (
+                                    <div
+                                        key={s.id}
+                                        className={`group w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                                            isActive
+                                                ? "bg-indigo-500/10 text-indigo-400"
+                                                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
                                         }`}
-                                >
-                                    <div className="flex items-center gap-3 truncate">
-                                        <FolderOpen className={`w-4 h-4 ${activeSpaceId === s.id ? "text-indigo-500" : "text-slate-500"}`} />
-                                        <span className="truncate">{s.name}</span>
+                                    >
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                className="w-full bg-transparent border-b border-indigo-500/50 rounded-none px-1 py-0.5 text-white focus:outline-none focus:border-indigo-500 focus:ring-0 text-sm"
+                                                value={editingSpaceName}
+                                                onChange={(e) => setEditingSpaceName(e.target.value)}
+                                                onBlur={() => finishEditingSpace(s.id)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        finishEditingSpace(s.id);
+                                                    } else if (e.key === 'Escape') {
+                                                        cancelEditingSpace();
+                                                    }
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <div 
+                                                className="flex-1 flex items-center justify-between min-w-0"
+                                                onClick={() => handleSelectSpace(s.id)}
+                                            >
+                                                <div className="flex items-center gap-3 truncate cursor-pointer flex-1">
+                                                    <FolderOpen className={`w-4 h-4 shrink-0 ${isActive ? "text-indigo-500" : "text-slate-500"}`} />
+                                                    <span className="truncate">{s.name}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            startEditingSpace(s.id, s.name);
+                                                        }}
+                                                        className="text-slate-400 hover:text-indigo-400 p-1 hover:bg-slate-800 rounded transition-colors"
+                                                        title="Edit name"
+                                                    >
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDeleteSpace(s.id, e)}
+                                                        className="text-slate-400 hover:text-rose-400 p-1 hover:bg-slate-800 rounded transition-colors"
+                                                        title="Delete space"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                </button>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </div>
@@ -269,7 +445,7 @@ export default function SpacePage() {
                     </div>
 
                     {activeSpace && (
-                        <Button variant="primary" size="md" onClick={() => setFlowModalOpen(true)}>
+                        <Button variant="primary" size="md" onClick={handleCreateFlow}>
                             <Plus className="w-4 h-4" />
                             New Flow
                         </Button>
@@ -285,13 +461,13 @@ export default function SpacePage() {
                             </div>
                             <h3 className="text-xl font-bold text-slate-200 mb-2">Create a Space</h3>
                             <p className="text-slate-400 text-sm mb-6">You need a space to organize your flows. Create one to get started.</p>
-                            <Button variant="primary" onClick={() => setSpaceModalOpen(true)}>Create Space</Button>
+                            <Button variant="primary" onClick={handleCreateSpace}>Create Space</Button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {/* Create New Flow Card */}
                             <button
-                                onClick={() => setFlowModalOpen(true)}
+                                onClick={handleCreateFlow}
                                 className="group flex flex-col items-center justify-center min-h-[220px] rounded-2xl bg-slate-900/50 border-2 border-dashed border-slate-700 hover:border-indigo-500 hover:bg-slate-800/50 transition-all duration-300 hover:-translate-y-1"
                             >
                                 <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-400 mb-4 transition-colors">
@@ -301,7 +477,20 @@ export default function SpacePage() {
                             </button>
 
                             {flows.map(f => (
-                                <div key={f.id} className="group relative flex flex-col min-h-[220px] p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10">
+                                <div 
+                                    key={f.id} 
+                                    onClick={() => navigate(`/editor/${f.id}`)}
+                                    className="group relative flex flex-col min-h-[220px] p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer"
+                                >
+                                    {/* Delete Flow Button (top right, visible on hover) */}
+                                    <button
+                                        onClick={(e) => handleDeleteFlow(f.id, e)}
+                                        className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 bg-slate-950/60 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-900/50 p-2 rounded-xl transition-all duration-200"
+                                        title="Delete flow"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+
                                     <div className="flex-1 bg-slate-950/50 rounded-xl mb-4 overflow-hidden relative border border-slate-800/80">
                                         <div className="absolute inset-0 opacity-10 group-hover:opacity-30 bg-gradient-to-br from-indigo-500 via-violet-500 to-cyan-500 blur-xl transition-opacity duration-500" />
                                         <div className="absolute inset-0 flex items-center justify-center">
@@ -310,19 +499,49 @@ export default function SpacePage() {
                                     </div>
 
                                     <div className="flex items-center justify-between mt-auto px-1">
-                                        <div>
-                                            <h3 className="font-medium text-slate-200 group-hover:text-indigo-400 transition-colors truncate max-w-[180px]">
-                                                {f.name}
-                                            </h3>
+                                        <div className="flex-1 min-w-0 mr-2" onClick={(e) => e.stopPropagation()}>
+                                            {editingFlowId === f.id ? (
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-transparent border-b border-indigo-500/50 rounded-none px-1 py-0.5 text-white focus:outline-none focus:border-indigo-500 focus:ring-0 text-sm font-medium"
+                                                    value={editingFlowName}
+                                                    onChange={(e) => setEditingFlowName(e.target.value)}
+                                                    onBlur={() => finishEditingFlow(f.id)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            finishEditingFlow(f.id);
+                                                        } else if (e.key === 'Escape') {
+                                                            cancelEditingFlow();
+                                                        }
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <div className="flex items-center gap-2 group/title">
+                                                    <h3 className="font-medium text-slate-200 group-hover:text-indigo-400 transition-colors truncate max-w-[150px]">
+                                                        {f.name}
+                                                    </h3>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            startEditingFlow(f.id, f.name);
+                                                        }}
+                                                        className="opacity-0 group-hover/title:opacity-100 text-slate-400 hover:text-indigo-400 p-1 rounded transition-opacity"
+                                                        title="Edit name"
+                                                    >
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                             <p className="text-xs text-slate-500 mt-1">Updated just now</p>
                                         </div>
 
-                                        <Link
-                                            to={`/editor/${f.id}`}
+                                        <div
                                             className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-indigo-500 hover:text-white"
                                         >
                                             <ArrowRight className="w-4 h-4" />
-                                        </Link>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -330,50 +549,6 @@ export default function SpacePage() {
                     )}
                 </div>
             </main>
-
-            {/* SPACE MODAL */}
-            {isSpaceModalOpen && (
-                <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center">
-                    <form onSubmit={handleCreateSpace} className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-                        <h2 className="text-2xl font-bold mb-2">New Space</h2>
-                        <p className="text-slate-400 text-sm mb-6">Create a workspace to organize related flows.</p>
-                        <input
-                            type="text"
-                            autoFocus
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 mb-6 transition-all"
-                            placeholder="e.g. Authentication MVP"
-                            value={newSpaceName}
-                            onChange={e => setNewSpaceName(e.target.value)}
-                        />
-                        <div className="flex justify-end gap-3">
-                            <Button type="button" variant="ghost" onClick={() => setSpaceModalOpen(false)}>Cancel</Button>
-                            <Button type="submit" variant="primary" disabled={!newSpaceName.trim()}>Create</Button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
-            {/* FLOW MODAL */}
-            {isFlowModalOpen && (
-                <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center">
-                    <form onSubmit={handleCreateFlow} className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-                        <h2 className="text-2xl font-bold mb-2">New Flow</h2>
-                        <p className="text-slate-400 text-sm mb-6">Create a new diagram within '{activeSpace?.name}'.</p>
-                        <input
-                            type="text"
-                            autoFocus
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 mb-6 transition-all"
-                            placeholder="e.g. Login Sequence"
-                            value={newFlowName}
-                            onChange={e => setNewFlowName(e.target.value)}
-                        />
-                        <div className="flex justify-end gap-3">
-                            <Button type="button" variant="ghost" onClick={() => setFlowModalOpen(false)}>Cancel</Button>
-                            <Button type="submit" variant="primary" disabled={!newFlowName.trim()}>Create & Open</Button>
-                        </div>
-                    </form>
-                </div>
-            )}
 
             {/* UPGRADE PROMPT MODAL */}
             <UpgradeModal

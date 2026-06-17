@@ -8,7 +8,7 @@ import type { FlowMetadata } from '../api/flow-service';
 import type { CanvasData } from '../api/canvas-service';
 import type { FlowHistoryData } from '../local/history-service';
 import { v4 as uuidv4 } from 'uuid';
-import { apiClient } from '../../config/api-client';
+import { useWorkspaceStore } from '../../store/workspace-store';
 
 export interface SyncOperation {
   id: string;
@@ -86,7 +86,7 @@ export const SpaceRepository = {
     const userId = user?.id || '';
     if (connectivity.isOnline()) {
       try {
-        const spaces = await remoteDriver.getAll<Space>('spaces');
+        const spaces = await remoteDriver.getSpaces();
         // Do NOT cache locally in IndexedDB as per online-first policy
         return spaces;
       } catch (err) {
@@ -120,7 +120,7 @@ export const SpaceRepository = {
     // Authenticated
     if (connectivity.isOnline()) {
       // Directly save in the backend, bypassing IndexedDB
-      await remoteDriver.set('spaces', id, space);
+      await remoteDriver.createSpace(id, name);
     } else {
       // Offline mode: save in IndexedDB and queue sync action
       await indexedDBDriver.set('spaces', id, space);
@@ -153,7 +153,7 @@ export const SpaceRepository = {
     // Authenticated
     if (connectivity.isOnline()) {
       // Directly update on backend, bypassing IndexedDB
-      await remoteDriver.set('spaces', id, { name: newName });
+      await remoteDriver.updateSpace(id, newName);
       return {
         id,
         name: newName,
@@ -198,7 +198,7 @@ export const SpaceRepository = {
     // Authenticated
     if (connectivity.isOnline()) {
       // Directly delete from remote database and clean up IndexedDB if cached offline
-      await remoteDriver.delete('spaces', id);
+      await remoteDriver.deleteSpace(id);
       await indexedDBDriver.delete('spaces', id);
       const flows = await indexedDBDriver.query<FlowMetadata>('flows', f => f.spaceId === id);
       for (const flow of flows) {
@@ -242,9 +242,9 @@ export const FlowRepository = {
     const userId = user?.id || '';
     if (connectivity.isOnline()) {
       try {
-        const response = await apiClient.get<{ success: boolean, data: FlowMetadata[] }>(`/spaces/${spaceId}/flows`);
+        const flows = await remoteDriver.getFlows(spaceId);
         // Do NOT cache locally in IndexedDB as per online-first policy
-        return response.data.data;
+        return flows;
       } catch (err) {
         console.error("Failed to load remote flows, using local cache", err);
       }
@@ -277,7 +277,7 @@ export const FlowRepository = {
     // Authenticated
     if (connectivity.isOnline()) {
       // Directly save in the backend, bypassing IndexedDB
-      await remoteDriver.set('flows', id, flow);
+      await remoteDriver.createFlow(spaceId, id, name);
     } else {
       // Offline mode: save in IndexedDB and queue sync action
       await indexedDBDriver.set('flows', id, flow);
@@ -309,12 +309,16 @@ export const FlowRepository = {
 
     // Authenticated
     if (connectivity.isOnline()) {
+      // Retrieve the flow to get the spaceId
+      const flow = useWorkspaceStore.getState().getFlowById(id);
+      const spaceId = flow?.spaceId || '';
+
       // Directly update in the backend, bypassing IndexedDB
-      await remoteDriver.set('flows', id, { name });
+      await remoteDriver.updateFlowName(id, name);
       return {
         id,
         name,
-        spaceId: '',
+        spaceId,
         userId: useAuthStore.getState().user?.id || '',
         createdAt: '',
         updatedAt: new Date().toISOString()
@@ -330,7 +334,7 @@ export const FlowRepository = {
         entityType: 'flow',
         action: 'update',
         entityId: id,
-        payload: { name },
+        payload: { spaceId: local.spaceId, name },
         timestamp: Date.now(),
         attempts: 0
       });
@@ -352,7 +356,7 @@ export const FlowRepository = {
     // Authenticated
     if (connectivity.isOnline()) {
       // Directly delete from remote database and clean up IndexedDB if cached
-      await remoteDriver.delete('flows', id);
+      await remoteDriver.deleteFlow(id);
       await indexedDBDriver.delete('flows', id);
       await indexedDBDriver.delete('canvas', id);
       localStorageDriver.delete('history', id);
@@ -388,7 +392,7 @@ export const CanvasRepository = {
     // Authenticated
     if (connectivity.isOnline()) {
       try {
-        const content = await remoteDriver.get<CanvasData>('canvas', flowId);
+        const content = await remoteDriver.getCanvasContent(flowId);
         // Do NOT cache locally in IndexedDB as per online-first policy
         return content || { nodes: [], edges: [] };
       } catch (err) {
@@ -413,7 +417,7 @@ export const CanvasRepository = {
     // Authenticated
     if (connectivity.isOnline()) {
       // Directly save to remote database, bypassing IndexedDB
-      await remoteDriver.set('canvas', flowId, { nodes, edges });
+      await remoteDriver.saveCanvas(flowId, nodes, edges);
     } else {
       // Offline mode: save to IndexedDB and queue/coalesce sync action
       await indexedDBDriver.set('canvas', flowId, { nodes, edges });
