@@ -18,7 +18,9 @@ const RectangleNode: React.FC<NodeProps<ShapeNode>> = ({ data = {}, selected, id
   const CORNER_RADIUS = 10;
   const STROKE_WIDTH = 1;
 
-  const { activeTool, setDrawingArrowFrom, updateShapeNode, commitHistory } = useEditorStore();
+  const { activeTool, setDrawingArrowFrom, updateShapeNode, commitHistory, copiedNodeIds = [], cutNodeIds = [] } = useEditorStore();
+  const isCopied = copiedNodeIds.includes(id);
+  const isCut = cutNodeIds.includes(id);
 
   const [hoverPos, setHoverPos] = useState<{ x: number, y: number, handlePosition: Position } | null>(null);
   const [isTextAreaEnabled, setIsTextAreaEnabled] = useState(false);
@@ -29,7 +31,7 @@ const RectangleNode: React.FC<NodeProps<ShapeNode>> = ({ data = {}, selected, id
   const baseBorder = data.borderColor || '#64748b';
 
   const displayBg = selected ? adjustColorBrightness(baseBg, 0.98) : baseBg;
-  const displayBorder = selected ? adjustColorBrightness(baseBorder, 0.75) : baseBorder;
+  const displayBorder = isCopied ? '#6366f1' : (isCut ? '#ef4444' : (selected ? adjustColorBrightness(baseBorder, 0.75) : baseBorder));
   const textColor = getContrastTextColor(displayBg);
 
   const handleDoubleClick = useCallback(() => {
@@ -127,7 +129,7 @@ const RectangleNode: React.FC<NodeProps<ShapeNode>> = ({ data = {}, selected, id
     <div
       ref={containerRef}
       className="relative flex items-center justify-center"
-      style={{ width: wrapperWidth, height: wrapperHeight }}
+      style={{ width: wrapperWidth, height: wrapperHeight, opacity: isCut ? 0.5 : 1 }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onDoubleClick={handleDoubleClick}
@@ -147,7 +149,8 @@ const RectangleNode: React.FC<NodeProps<ShapeNode>> = ({ data = {}, selected, id
           style={{
             fill: displayBg,
             stroke: displayBorder,
-            strokeWidth: selected ? 1.2 : 1,
+            strokeWidth: (selected || isCopied || isCut) ? 1.5 : 1,
+            strokeDasharray: (isCopied || isCut) ? '5,5' : undefined,
           }}
           className={`
             ${selected ? 'shadow-md' : 'shadow-sm hover:shadow-md'}

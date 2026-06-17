@@ -2,8 +2,10 @@ import { BaseEdge, getSmoothStepPath, useNodes, type EdgeProps } from "@xyflow/r
 import React from "react";
 import type { CustomEdge } from "../../../types";
 import { adjustColorBrightness } from "../../../utils/colors";
+import { useEditorStore } from "../../../store/editor-store";
 
 const ConnectableArrow: React.FC<EdgeProps<CustomEdge>> = ({
+  id,
   sourceX,
   sourceY,
   targetX,
@@ -17,6 +19,10 @@ const ConnectableArrow: React.FC<EdgeProps<CustomEdge>> = ({
   target
 }) => {
   const nodes = useNodes();
+  const { copiedEdgeIds = [], cutEdgeIds = [] } = useEditorStore();
+
+  const isCopied = copiedEdgeIds.includes(id);
+  const isCut = cutEdgeIds.includes(id);
 
   const [stepTypePath] = getSmoothStepPath({
     sourceX, sourceY, targetX, targetY,
@@ -31,14 +37,17 @@ const ConnectableArrow: React.FC<EdgeProps<CustomEdge>> = ({
 
   const baseColor = data?.arrowColor || "#64748b"; // slate-500
   const displayColor = isSelected ? adjustColorBrightness(baseColor, 0.90) : baseColor;
+  const strokeColor = isCopied ? '#6366f1' : (isCut ? '#ef4444' : displayColor);
 
   return (
     <BaseEdge
       path={stepTypePath}
       markerEnd={markerEnd}
       style={{
-        stroke: displayColor,
-        strokeWidth: isSelected ? 1.2 : 1
+        stroke: strokeColor,
+        strokeWidth: (isSelected || isCopied || isCut) ? 1.5 : 1,
+        strokeDasharray: (isCopied || isCut) ? '5,5' : undefined,
+        opacity: isCut ? 0.5 : 1
       }}
     />
   );

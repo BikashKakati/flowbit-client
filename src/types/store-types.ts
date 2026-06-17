@@ -9,6 +9,11 @@ export interface CanvasSlice {
   edges: CustomEdge[];
   selectedNodeIds: string[];
   selectedEdgeIds: string[];
+  copiedNodeIds: string[];
+  copiedEdgeIds: string[];
+  cutNodeIds: string[];
+  cutEdgeIds: string[];
+  clipboard: { nodes: AppNode[]; edges: CustomEdge[]; action: 'copy' | 'cut' } | null;
   initializeCanvasData: (nodes: AppNode[], edges: CustomEdge[]) => void;
   updateShapeNode: (id: string, updates: { text?: string; width?: number; height?: number; bgColor?: string; borderColor?: string; }) => void;
   updateEdgeStyle: (id: string, updates: { arrowColor?: string; }) => void;
@@ -19,6 +24,9 @@ export interface CanvasSlice {
   updateAnchorPositions: (changes: NodeChange<AppNode>[], anchorPositionChanges: NodeChange<AppNode>[]) => void;
   createGroup: () => void;
   ungroup: () => void;
+  copyElements: () => void;
+  cutElements: () => void;
+  pasteElements: () => void;
 }
 
 export interface InteractionSlice {

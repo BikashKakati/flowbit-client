@@ -12,12 +12,22 @@ import {
   createGroupAction,
   ungroupAction,
 } from '../actions/canvas-actions';
+import {
+  copyElementsAction,
+  cutElementsAction,
+  pasteElementsAction,
+} from '../actions/clipboard-actions';
 
 export const createCanvasSlice: StateCreator<EditorStoreType, [], [], CanvasSlice> = (set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeIds: [],
   selectedEdgeIds: [],
+  copiedNodeIds: [],
+  copiedEdgeIds: [],
+  cutNodeIds: [],
+  cutEdgeIds: [],
+  clipboard: null,
   initializeCanvasData: (nodes, edges) => set((state: EditorStoreType) => initializeCanvasDataAction(state, nodes, edges)),
   updateShapeNode: (id, updates) => {
     get().commitHistory();
@@ -45,5 +55,11 @@ export const createCanvasSlice: StateCreator<EditorStoreType, [], [], CanvasSlic
   ungroup: () => {
     get().commitHistory();
     set((state: EditorStoreType) => ungroupAction(state));
+  },
+  copyElements: () => set((state: EditorStoreType) => copyElementsAction(state)),
+  cutElements: () => set((state: EditorStoreType) => cutElementsAction(state)),
+  pasteElements: () => {
+    get().commitHistory();
+    set((state: EditorStoreType) => pasteElementsAction(state));
   },
 });
