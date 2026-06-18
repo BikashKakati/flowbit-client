@@ -1,9 +1,8 @@
 import { ReactFlowProvider } from "@xyflow/react";
-import { ArrowLeft, CheckCircle2, Loader2, Redo2, Undo2, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FlowService } from "../../services/api/flow-service";
-import { Button } from "../../components/common/Button";
 import MainCanvas from "../../components/main-canvas/MainCanvas";
 import Sidebar from "../../components/sidebar/Sidebar";
 import { CanvasService } from "../../services/api/canvas-service";
@@ -19,8 +18,6 @@ const FlowbitCanvasPage = () => {
         initializeCanvasData, setActiveFlow: setActiveFlowHistory,
         undoHistory: undo,
         redoHistory: redo,
-        past,
-        future,
         copyElements,
         cutElements,
         pasteElements
@@ -199,7 +196,7 @@ const FlowbitCanvasPage = () => {
                         />
                     ) : (
                         <div className="flex items-center gap-1.5">
-                            <span 
+                            <span
                                 className="font-semibold text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors"
                                 onClick={() => {
                                     setEditingNameValue(flowName);
@@ -234,25 +231,6 @@ const FlowbitCanvasPage = () => {
                             <span className="flex items-center gap-1.5 text-xs text-slate-400"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> Saved</span>
                         )}
                     </div>
-                </div>
-
-                <div className="flex items-center bg-white border border-slate-200 rounded-lg shadow-sm">
-                    <Button
-                        variant="general"
-                        onClick={undo}
-                        disabled={past?.length === 0}
-                        title="Undo (Ctrl+Z)"
-                    >
-                        <Undo2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                        variant="general"
-                        onClick={redo}
-                        disabled={future?.length === 0}
-                        title="Redo (Ctrl+Y)"
-                    >
-                        <Redo2 className="w-4 h-4" />
-                    </Button>
                 </div>
             </div>
 

@@ -49,6 +49,7 @@ const MainCanvas: React.FC = () => {
         onNodeDragStart={() => commitHistory()}
         connectionMode={ConnectionMode.Loose}
         connectionLineComponent={ConnectionLine}
+        proOptions={{ hideAttribution: true }}
 
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
