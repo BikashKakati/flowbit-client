@@ -78,6 +78,7 @@ export const FEATURES_LIST = [
         bullets: ["Real-time presence cursors", "Named collaborator avatars", "Conflict-free sync (CRDT)"],
         visualKey: "collaboration",
         visualLeft: false,
+        badge: "Work in Progress",
     },
     {
         tag: "Export",
@@ -89,6 +90,7 @@ export const FEATURES_LIST = [
         bullets: ["SVG, PNG, PDF, JSON", "Embed in Notion, Confluence", "Public share links"],
         visualKey: "export",
         visualLeft: true,
+        badge: "Work in Progress",
     },
 ];
 

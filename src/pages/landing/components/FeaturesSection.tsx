@@ -172,7 +172,6 @@ function VisualExport() {
     return (
         <div className="relative w-full h-64 rounded-xl bg-[#080d17] border border-slate-800/60 overflow-hidden select-none p-5 flex flex-col justify-center gap-3">
             <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle,#1e2d44_1px,transparent_1px)] bg-[size:22px_22px]" />
-            <p className="text-[11px] text-slate-500 font-mono relative z-10 mb-1">Export "api-architecture"</p>
             {EXPORT_FORMATS.map((f, i) => (
                 <div
                     key={f.ext}
@@ -267,10 +266,17 @@ function FeatureRow({ feature: f }: { feature: any }) {
                 </div>
             </div>
             <div className={`flex flex-col gap-5 ${f.visualLeft ? "order-2 lg:order-2" : "order-2 lg:order-1"}`}>
-                <span className={`inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase px-2.5 py-1 rounded-full border w-fit ${f.tagColor}`}>
-                    <f.icon className={`w-3 h-3 ${f.iconColor}`} />
-                    {f.tag}
-                </span>
+                <div className="flex items-center gap-3">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase px-2.5 py-1 rounded-full border w-fit ${f.tagColor}`}>
+                        <f.icon className={`w-3 h-3 ${f.iconColor}`} />
+                        {f.tag}
+                    </span>
+                    {f.badge && (
+                        <span className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-400">
+                            {f.badge}
+                        </span>
+                    )}
+                </div>
                 <h3 className="text-2xl lg:text-3xl font-bold text-white leading-snug">
                     {f.title}
                 </h3>
