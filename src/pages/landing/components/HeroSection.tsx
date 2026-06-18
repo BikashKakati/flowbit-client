@@ -27,24 +27,34 @@ function FloatingChip({
     value,
     style,
     accentClass,
+    entranceDelay = "0s",
 }: {
     icon: any;
     label: string;
     value: string;
     style: React.CSSProperties;
     accentClass: string;
+    entranceDelay?: string;
 }) {
+    const { top, left, right, bottom } = style;
+    const positionStyle = { top, left, right, bottom };
+
     return (
         <div
-            className="absolute z-20 flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-900 border border-white/10 rounded-xl shadow-xl pointer-events-none select-none animate-chip-float"
-            style={{ ...style, animationDelay: style.animationDelay ?? "0s" } as React.CSSProperties}
+            className="absolute z-20 opacity-0 animate-fade-in-up"
+            style={{ ...positionStyle, animationDelay: entranceDelay } as React.CSSProperties}
         >
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${accentClass}`}>
-                <Icon className="w-3.5 h-3.5" />
-            </div>
-            <div>
-                <p className="text-[10px] text-slate-500 leading-none mb-0.5">{label}</p>
-                <p className="text-xs font-semibold text-slate-200 leading-none">{value}</p>
+            <div
+                className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-900 border border-white/10 rounded-xl shadow-xl pointer-events-none select-none animate-chip-float"
+                style={{ animationDelay: style.animationDelay ?? "0s" } as React.CSSProperties}
+            >
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${accentClass}`}>
+                    <Icon className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                    <p className="text-[10px] text-slate-500 leading-none mb-0.5">{label}</p>
+                    <p className="text-xs font-semibold text-slate-200 leading-none">{value}</p>
+                </div>
             </div>
         </div>
     );
@@ -97,7 +107,7 @@ export function HeroSection() {
                         infinitely flexible canvas built for developers who think visually.
                     </p>
                     <div className="flex flex-col sm:flex-row items-start gap-3 mb-12">
-                        <Button to="/space" variant="gradient" size="lg">
+                        <Button to="/space" variant="gradient" size="lg" className="opacity-0 animate-fade-in-up [animation-delay:300ms]">
                             Start building free
                             <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
@@ -105,7 +115,7 @@ export function HeroSection() {
                             href="https://github.com"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-medium text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-slate-200 transition-all duration-200 w-full sm:w-auto justify-center"
+                            className="flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-medium text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-slate-200 transition-all duration-200 w-full sm:w-auto justify-center opacity-0 animate-fade-in-up [animation-delay:450ms]"
                         >
                             <Github className="w-4 h-4" />
                             View on GitHub
@@ -127,7 +137,7 @@ export function HeroSection() {
                 </div>
                 <div className="relative flex items-center justify-center">
                     <div
-                        className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-slate-800/80 bg-[linear-gradient(145deg,#0d1320_0%,#090e1a_100%)] shadow-[0_0_0_1px_rgba(99,102,241,0.12),0_32px_80px_rgba(0,0,0,0.6),0_0_80px_rgba(99,102,241,0.08)]"
+                        className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-slate-800/80 bg-[linear-gradient(145deg,#0d1320_0%,#090e1a_100%)] shadow-[0_0_0_1px_rgba(99,102,241,0.12),0_32px_80px_rgba(0,0,0,0.6),0_0_80px_rgba(99,102,241,0.08)] opacity-0 animate-fade-in-up [animation-delay:200ms]"
                     >
                         <div className="absolute top-0 left-0 right-0 h-9 border-b border-white/5 bg-slate-950/70 backdrop-blur flex items-center px-3 gap-2 z-10">
                             <div className="flex gap-1.5 mr-2">
@@ -173,7 +183,8 @@ export function HeroSection() {
                         label="Connected nodes"
                         value="5 nodes · 4 edges"
                         accentClass="bg-indigo-500/15 text-indigo-400"
-                        style={{ top: "-18px", left: "-20px" }}
+                        style={{ top: "-18px", left: "70px" }}
+                        entranceDelay="400ms"
                     />
                     <FloatingChip
                         icon={Zap}
@@ -181,6 +192,7 @@ export function HeroSection() {
                         value="Dagre · Active"
                         accentClass="bg-violet-500/15 text-violet-400"
                         style={{ top: "30%", right: "-28px", animationDelay: "0.6s" }}
+                        entranceDelay="550ms"
                     />
                     <FloatingChip
                         icon={Users}
@@ -188,6 +200,7 @@ export function HeroSection() {
                         value="3 editing now"
                         accentClass="bg-cyan-500/15 text-cyan-400"
                         style={{ bottom: "22%", left: "-24px", animationDelay: "1.1s" }}
+                        entranceDelay="700ms"
                     />
                     <FloatingChip
                         icon={Layers}
@@ -195,6 +208,7 @@ export function HeroSection() {
                         value="Grouped · 2 frames"
                         accentClass="bg-indigo-500/15 text-indigo-400"
                         style={{ bottom: "-14px", right: "10%", animationDelay: "1.7s" }}
+                        entranceDelay="850ms"
                     />
                     <div className="absolute -top-3 -right-3 w-20 h-20 opacity-30 bg-[radial-gradient(circle,rgba(139,92,246,0.6)_0%,transparent_70%)]" />
                     <div className="absolute -bottom-4 -left-4 w-24 h-24 opacity-20 bg-[radial-gradient(circle,rgba(34,211,238,0.5)_0%,transparent_70%)]" />
