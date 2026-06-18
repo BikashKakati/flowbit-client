@@ -25,6 +25,9 @@ export enum EdgeTypes {
 export type EdgeData = {
   arrowColor?:string,
   arrowText?:string,
+  offset?:number,
+  offsetSource?:number,
+  offsetTarget?:number,
 }
 
 export type AnchorData = {

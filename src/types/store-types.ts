@@ -16,7 +16,8 @@ export interface CanvasSlice {
   clipboard: { nodes: AppNode[]; edges: CustomEdge[]; action: 'copy' | 'cut' } | null;
   initializeCanvasData: (nodes: AppNode[], edges: CustomEdge[]) => void;
   updateShapeNode: (id: string, updates: { text?: string; width?: number; height?: number; bgColor?: string; borderColor?: string; }) => void;
-  updateEdgeStyle: (id: string, updates: { arrowColor?: string; }) => void;
+  updateEdgeStyle: (id: string, updates: { arrowColor?: string; offset?: number; }) => void;
+  updateEdgeOffsets: (id: string, offsets: { offset?: number; offsetSource?: number; offsetTarget?: number; }) => void;
   deleteElements: (ids: string[], type: 'node' | 'edge') => void;
   onNodesChange: (changes: NodeChange<AppNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<CustomEdge>[]) => void;

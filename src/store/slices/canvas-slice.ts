@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { EditorStoreType, CanvasSlice } from '../../types/store-types';
+import type { CustomEdge } from '../../types';
 import {
   initializeCanvasDataAction,
   updateShapeNodeAction,
@@ -37,6 +38,21 @@ export const createCanvasSlice: StateCreator<EditorStoreType, [], [], CanvasSlic
     get().commitHistory();
     set((state: EditorStoreType) => updateEdgeStyleAction(state, id, updates));
   },
+  updateEdgeOffsets: (id, offsets) => set((state: EditorStoreType) => {
+    const newEdges = state.edges.map(edge => {
+      if (edge.id === id) {
+        return {
+          ...edge,
+          data: {
+            ...edge.data,
+            ...offsets
+          }
+        } as CustomEdge;
+      }
+      return edge;
+    });
+    return { edges: newEdges };
+  }),
   deleteElements: (ids, type) => {
     get().commitHistory();
     set((state: EditorStoreType) => deleteElementsAction(state, ids, type));

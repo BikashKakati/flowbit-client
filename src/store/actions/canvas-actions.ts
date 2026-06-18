@@ -63,11 +63,11 @@ export const updateShapeNodeAction = (
 export const updateEdgeStyleAction = (
   state: EditorStoreType,
   id: string,
-  updates: { arrowColor?: string; }
+  updates: { arrowColor?: string; offset?: number; }
 ): Partial<EditorStoreType> => {
   const newEdges = state.edges.map(edge => {
     if (edge.id === id) {
-      const newEdge = { ...edge, data: { ...edge.data, arrowColor: updates.arrowColor } } as CustomEdge;
+      const newEdge = { ...edge, data: { ...edge.data, arrowColor: updates.arrowColor, offset: updates.offset !== undefined ? updates.offset : edge.data?.offset } } as CustomEdge;
       if (updates.arrowColor) {
         // Must update React Flow's native marker object to change the arrow head
         newEdge.markerEnd = { 
@@ -356,4 +356,27 @@ export const ungroupAction = (state: EditorStoreType): Partial<EditorStoreType> 
    });
 
    return { nodes: newNodes, selectedNodeIds: [] };
+};
+
+export const moveAnchorNodeAction = (
+  state: EditorStoreType,
+  id: string,
+  newAbsPos: { x: number; y: number }
+): Partial<EditorStoreType> => {
+  const newNodes = state.nodes.map((node) => {
+    if (node.id === id && node.type === 'anchor') {
+      const snapPoint = calculateSnapTarget(newAbsPos, state.nodes);
+      return {
+        ...node,
+        position: { x: snapPoint.x, y: snapPoint.y },
+        parentId: snapPoint.snappedParentId,
+        data: {
+          ...node.data,
+          handlePosition: snapPoint.handlePosition,
+        },
+      } as AppNode;
+    }
+    return node;
+  });
+  return { nodes: newNodes };
 };
