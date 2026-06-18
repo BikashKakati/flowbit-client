@@ -7,6 +7,7 @@
   --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-draw-line: draw-line 2s linear infinite;
   --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
+  --animate-chip-float: chipFloat 3.8s ease-in-out infinite;
 
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
@@ -23,6 +24,10 @@
   @keyframes fade-in-up {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes chipFloat {
+    0%, 100% { transform: translateY(0px) scale(1); opacity: 1; }
+    50% { transform: translateY(-5px) scale(1.02); opacity: 0.9; }
   }
 }
 

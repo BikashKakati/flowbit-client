@@ -1,16 +1,21 @@
-import { CTASection } from "./components/CTASection";
-import { FeaturesSection } from "./components/FeaturesSection";
-import { HeroSection } from "./components/HeroSection";
-import { InteractivePreviewSection } from "./components/InteractivePreviewSection";
 import { Navbar } from "./components/Navbar";
+import { HeroSection } from "./components/HeroSection";
+import { FeaturesSection } from "./components/FeaturesSection";
+import { CTASection } from "./components/CTASection";
+import { HowItWorksSection } from "./components/HowItWorksSection";
+import { SocialProofSection } from "./components/SocialProofSection";
 
 export default function LandingPage() {
     return (
-        <div className="min-h-screen bg-slate-950 text-white overflow-hidden selection:bg-indigo-500/30">
+        <div
+            className="min-h-screen text-white overflow-hidden selection:bg-indigo-500/30"
+            style={{ background: "#070B14" }}
+        >
             <Navbar />
             <HeroSection />
-            <InteractivePreviewSection />
             <FeaturesSection />
+            <HowItWorksSection />
+            <SocialProofSection />
             <CTASection />
         </div>
     );
