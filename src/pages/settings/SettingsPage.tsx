@@ -6,6 +6,7 @@ import { useWorkspaceStore } from '../../store/workspace-store';
 import { FlowbitLogo } from '../../components/icons/Logo';
 import { Button } from '../../components/common/Button';
 import { Loader2, ArrowLeft, LogOut, Sparkles, Check, ArrowRight } from 'lucide-react';
+import FlowbitLoader from '../../components/common/FlowbitLoader';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
@@ -63,11 +64,7 @@ export default function SettingsPage() {
     };
 
     if (isLoading) {
-        return (
-            <div className="w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-white gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-            </div>
-        );
+        return <FlowbitLoader message="Loading settings..." />;
     }
 
     if (!isAuthenticated) {

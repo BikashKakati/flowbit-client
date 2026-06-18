@@ -9,6 +9,7 @@ import { CanvasService } from "../../services/api/canvas-service";
 import { useEditorStore } from "../../store/editor-store";
 import { useWorkspaceStore } from "../../store/workspace-store";
 import { DEBOUNCE_DELAY } from "../../constant";
+import FlowbitLoader from "../../components/common/FlowbitLoader";
 
 const FlowbitCanvasPage = () => {
     const { id } = useParams();
@@ -152,12 +153,7 @@ const FlowbitCanvasPage = () => {
     }, [id, isLoading]);
 
     if (isLoading) {
-        return (
-            <div className="w-screen h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-                <p className="text-slate-500 font-medium animate-pulse">Loading canvas...</p>
-            </div>
-        );
+        return <FlowbitLoader message="Loading canvas..." />;
     }
 
     return (
