@@ -20,7 +20,7 @@ export function Navbar() {
                         Sign In
                     </Button>
                 )}
-                <Button to="/space" variant="primary" size="sm">
+                <Button to="/space" variant="gradient" size="sm">
                     Open Spaces
                 </Button>
             </div>
