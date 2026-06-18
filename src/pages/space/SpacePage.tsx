@@ -12,15 +12,15 @@ import UpgradeModal from "../../components/common/UpgradeModal";
 
 export default function SpacePage() {
     const navigate = useNavigate();
-    const { 
-        spaces, 
-        activeSpaceId, 
-        setSpaces, 
-        setActiveSpaceId, 
-        addSpace, 
-        addFlow, 
-        getFlowsBySpaceId, 
-        hasFetchedFlowsForSpace, 
+    const {
+        spaces,
+        activeSpaceId,
+        setSpaces,
+        setActiveSpaceId,
+        addSpace,
+        addFlow,
+        getFlowsBySpaceId,
+        hasFetchedFlowsForSpace,
         setFlowsForSpace,
         updateSpace,
         deleteSpace,
@@ -57,7 +57,7 @@ export default function SpacePage() {
                 if (loadedSpaces.length > 0) {
                     const firstSpaceId = activeSpaceId || loadedSpaces[0].id;
                     setActiveSpaceId(firstSpaceId);
-                    
+
                     // For guests, prefetch flows for all spaces immediately to compute global limits accurately
                     if (!isAuthenticated) {
                         for (const space of loadedSpaces) {
@@ -111,7 +111,7 @@ export default function SpacePage() {
             addSpace(s);
             setActiveSpaceId(s.id);
             setFlowsForSpace(s.id, []);
-            
+
             // Enter edit mode for the newly created space immediately
             setEditingSpaceId(s.id);
             setEditingSpaceName(defaultSpaceName);
@@ -273,10 +273,12 @@ export default function SpacePage() {
 
             {/* LEFT SIDEBAR: Spaces */}
             <aside className="w-72 bg-slate-950 border-r border-slate-800 flex flex-col">
-                <div className="p-5 flex items-center gap-3 border-b border-slate-800/50">
-                    <Link to="/" className="hover:opacity-80 transition-opacity flex items-center gap-2">
-                        <FlowbitLogo className="w-8 h-8" />
-                        <span className="text-xl font-bold tracking-tight">Flowbit</span>
+                <div className="p-5 pb-8 flex items-center gap-3 border-b border-slate-800/50">
+                    <Link to="/" className="text-xl font-bold tracking-tight">
+                        Flows
+                        <span className="text-transparent bg-clip-text bg-[linear-gradient(135deg,#818cf8_0%,#a78bfa_40%,#38bdf8_100%)]">
+                            bit
+                        </span>
                     </Link>
                 </div>
 
@@ -298,11 +300,10 @@ export default function SpacePage() {
                                 return (
                                     <div
                                         key={s.id}
-                                        className={`group w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                                            isActive
-                                                ? "bg-indigo-500/10 text-indigo-400"
-                                                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-                                        }`}
+                                        className={`group w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
+                                            ? "bg-indigo-500/10 text-indigo-400"
+                                            : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
+                                            }`}
                                     >
                                         {isEditing ? (
                                             <input
@@ -322,7 +323,7 @@ export default function SpacePage() {
                                                 autoFocus
                                             />
                                         ) : (
-                                            <div 
+                                            <div
                                                 className="flex-1 flex items-center justify-between min-w-0"
                                                 onClick={() => handleSelectSpace(s.id)}
                                             >
@@ -404,11 +405,11 @@ export default function SpacePage() {
                                 </div>
                                 <div className="text-[11px] text-slate-400 space-y-1">
                                     <div className="flex justify-between">
-                                        <span>Spaces:</span> 
+                                        <span>Spaces:</span>
                                         <span className="font-semibold text-slate-200">{spaces.length} / 3</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Flows:</span> 
+                                        <span>Flows:</span>
                                         <span className="font-semibold text-slate-200">{globalFlowsCount} / 6</span>
                                     </div>
                                 </div>
@@ -445,7 +446,7 @@ export default function SpacePage() {
                     </div>
 
                     {activeSpace && (
-                        <Button variant="primary" size="md" onClick={handleCreateFlow}>
+                        <Button variant="gradient" size="sm" onClick={handleCreateFlow}>
                             <Plus className="w-4 h-4" />
                             New Flow
                         </Button>
@@ -477,8 +478,8 @@ export default function SpacePage() {
                             </button>
 
                             {flows.map(f => (
-                                <div 
-                                    key={f.id} 
+                                <div
+                                    key={f.id}
                                     onClick={() => navigate(`/editor/${f.id}`)}
                                     className="group relative flex flex-col min-h-[220px] p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer"
                                 >
