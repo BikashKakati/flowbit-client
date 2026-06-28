@@ -30,7 +30,7 @@ const EllipseNode: React.FC<NodeProps<ShapeNode>> = ({ data = {}, selected, id, 
 
   const displayBg = selected ? adjustColorBrightness(baseBg, 0.98) : baseBg;
   const displayBorder = isCopied ? '#6366f1' : (isCut ? '#ef4444' : (selected ? adjustColorBrightness(baseBorder, 0.75) : baseBorder));
-  const textColor = getContrastTextColor(displayBg);
+  const textColor = data.textColor || getContrastTextColor(displayBg);
 
   const handleDoubleClick = useCallback(() => {
     if (selected) {
@@ -169,8 +169,11 @@ const EllipseNode: React.FC<NodeProps<ShapeNode>> = ({ data = {}, selected, id, 
           onSave={handleSave}
           onCancel={handleCancel}
           onContentSizeChange={handleContentSizeChange}
-          className="text-sm leading-relaxed font-medium transition-colors duration-200"
-          style={{ color: textColor }}
+          className="leading-relaxed font-medium transition-colors duration-200"
+          style={{ 
+            color: textColor,
+            fontSize: `${data.fontSize ?? 14}px`
+          }}
         />
       </div>
 

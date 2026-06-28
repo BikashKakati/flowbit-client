@@ -15,7 +15,7 @@ export const initializeCanvasDataAction = (
 export const updateShapeNodeAction = (
   state: EditorStoreType,
   id: string,
-  updates: { text?: string; width?: number; height?: number; bgColor?: string; borderColor?: string; }
+  updates: { text?: string; width?: number; height?: number; bgColor?: string; borderColor?: string; fontSize?: number; textColor?: string; }
 ): Partial<EditorStoreType> => {
   let targetIds = [id];
   const targetNode = state.nodes.find(n => n.id === id);
@@ -36,7 +36,7 @@ export const updateShapeNodeAction = (
 
   const newNodes = state.nodes.map((node) => {
     if (targetIds.includes(node.id)) {
-      if (node.type === 'rectangle' || node.type === 'ellipse') {
+      if (node.type === 'rectangle' || node.type === 'ellipse' || node.type === 'text') {
         let newData = { ...node.data };
         if (updates.text !== undefined) {
           newData = { ...newData, content: { ...(newData.content || {}), text: updates.text } };
@@ -46,6 +46,12 @@ export const updateShapeNodeAction = (
         }
         if (updates.borderColor !== undefined) {
           newData.borderColor = updates.borderColor;
+        }
+        if (updates.fontSize !== undefined) {
+          newData.fontSize = updates.fontSize;
+        }
+        if (updates.textColor !== undefined) {
+          newData.textColor = updates.textColor;
         }
         return {
           ...node,
