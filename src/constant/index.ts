@@ -18,11 +18,12 @@ export const sidebarTools: SidebarTools = {
     RECTANGLE: "rectangle",
     ELLIPSE: "ellipse",
     ARROW: "arrow",
-    PAN_ZOOM: "pan_zoom"
+    PAN_ZOOM: "pan_zoom",
+    TEXT: "text"
 }
 
 export const DEBOUNCE_DELAY = 2000;
-export const COLORS = ['transparent', '#ffffff', '#f1f5f9', '#fca5a5', '#fcd34d', '#86efac', '#93c5fd', '#c4b5fd', '#cbd5e1', '#334155'];
+export const COLORS = ['transparent', '#000000', '#ffffff', '#f1f5f9', '#fca5a5', '#fcd34d', '#86efac', '#93c5fd', '#c4b5fd', '#cbd5e1', '#334155'];
 
 export const HERO_CANVAS_NODES: Node[] = [
     { id: "1", type: "hero", position: { x: 30, y: 120 }, data: { label: "Auth Service", color: "indigo" } },

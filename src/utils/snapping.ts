@@ -19,7 +19,7 @@ export function calculateSnapTarget(
   for (const node of nodes) {
     if (!node.position) continue;
 
-    if (node.type === ShapeNodeType.rectangle) {
+    if (node.type === ShapeNodeType.rectangle || node.type === ShapeNodeType.text) {
       const margin = 8;
       const wrapperWidth = node.width ?? 336;
       const wrapperHeight = node.height ?? 208;

@@ -60,3 +60,81 @@
 .tool-select .react-flow__node:active {
   cursor: url("/select-cursor.svg") 1 1, auto !important;
 }
+
+.tool-text .react-flow__pane,
+.tool-text .react-flow__node {
+  cursor: text !important;
+}
+
+/* Hide top/bottom handles and lines for text nodes to restrict height resizing strictly to corner drags */
+.text-node-resizer .react-flow__resize-handle.top,
+.text-node-resizer .react-flow__resize-handle.bottom,
+.text-node-resizer .react-flow__resize-line.top,
+.text-node-resizer .react-flow__resize-line.bottom {
+  display: none !important;
+}
+
+/* Increase resize handle hover/click hit box area (20x20px transparent container) */
+.react-flow__resize-handle {
+  width: 20px !important;
+  height: 20px !important;
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: none !important;
+  margin: -10px 0 0 -10px !important;
+}
+
+/* Visual circular dot inside the hit box container */
+.react-flow__resize-handle::after {
+  content: "" !important;
+  width: 8px !important;
+  height: 8px !important;
+  background-color: #ffffff !important;
+  border: 2px solid #6366f1 !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+
+/* Thicker drag hit-area for horizontal resize lines */
+.react-flow__resize-line.top,
+.react-flow__resize-line.bottom {
+  height: 12px !important;
+  margin-top: -6px !important;
+  background: transparent !important;
+}
+
+/* Thicker drag hit-area for vertical resize lines */
+.react-flow__resize-line.left,
+.react-flow__resize-line.right {
+  width: 12px !important;
+  margin-left: -6px !important;
+  background: transparent !important;
+}
+
+/* Visual boundary lines rendering within hit boxes */
+.react-flow__resize-line.top::before,
+.react-flow__resize-line.bottom::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 5px !important;
+  height: 1.5px !important;
+  background-color: #6366f1 !important;
+}
+
+.react-flow__resize-line.left::before,
+.react-flow__resize-line.right::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 5px !important;
+  width: 1.5px !important;
+  background-color: #6366f1 !important;
+}

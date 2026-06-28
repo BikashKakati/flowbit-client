@@ -6,7 +6,8 @@ import {
   Square,
   Circle,
   ArrowRight,
-  Hand
+  Hand,
+  Type
 } from "lucide-react";
 
 const Sidebar: React.FC = () => {
@@ -17,6 +18,7 @@ const Sidebar: React.FC = () => {
     { key: sidebarTools.RECTANGLE, icon: Square, label: 'Rectangle' },
     { key: sidebarTools.ELLIPSE, icon: Circle, label: 'Ellipse' },
     { key: sidebarTools.ARROW, icon: ArrowRight, label: 'Arrow' },
+    { key: sidebarTools.TEXT, icon: Type, label: 'Text' },
     { key: sidebarTools.PAN_ZOOM, icon: Hand, label: 'Pan/Zoom' }
   ];
 

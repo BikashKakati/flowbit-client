@@ -24,7 +24,7 @@ export function useCanvasInteractions() {
   }, [drawingArrowFrom, anchorNodeDetails, initializeArrowFromExternal]);
 
   const handleMouseDown = useCallback((event: ReactMouseEvent) => {
-    if ((activeTool !== sidebarTools.RECTANGLE && activeTool !== sidebarTools.ELLIPSE && activeTool !== sidebarTools.ARROW) || event.button !== 0) return;
+    if ((activeTool !== sidebarTools.RECTANGLE && activeTool !== sidebarTools.ELLIPSE && activeTool !== sidebarTools.ARROW && activeTool !== sidebarTools.TEXT) || event.button !== 0) return;
     event.preventDefault();
 
     const flowPosition = screenToFlowPosition({ x: event.clientX, y: event.clientY });

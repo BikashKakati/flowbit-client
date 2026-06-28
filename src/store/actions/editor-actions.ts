@@ -64,6 +64,19 @@ export const startFreehandDrawAction = (
       nodes: [...state.nodes, newNode],
       drawingShapeDetails: { id: newShapeId, startPosition: flowPosition }
     };
+  } else if (state.activeTool === sidebarTools.TEXT) {
+    const newTextNodeId = `text-${getUniqueId()}`;
+    
+    const newNode: ShapeNode = {
+      id: newTextNodeId, type: ShapeNodeType.text, position: flowPosition,
+      data: { content: { text: "Double click to edit text" }, bgColor: 'transparent', borderColor: 'transparent', fontSize: 14 },
+      width: 180, height: 40, selected: true,
+    };
+
+    return {
+      nodes: [...state.nodes, newNode],
+      drawingShapeDetails: { id: newTextNodeId, startPosition: flowPosition }
+    };
   } else if (state.activeTool === sidebarTools.ARROW) {
     return {
       drawingArrowFrom: { x: flowPosition.x, y: flowPosition.y }
@@ -101,6 +114,17 @@ export const updateFreehandDrawAction = (
       return node;
     });
     return { nodes: newNodes };
+  } else if (state.drawingShapeDetails && state.activeTool === sidebarTools.TEXT) {
+    const { id, startPosition } = state.drawingShapeDetails;
+    const newNodes = state.nodes.map((node) => {
+      if (node.id === id) {
+        const width = Math.max(40, Math.abs(flowPosition.x - startPosition.x));
+        const position = { x: Math.min(flowPosition.x, startPosition.x), y: startPosition.y };
+        return { ...node, position, width } as AppNode;
+      }
+      return node;
+    });
+    return { nodes: newNodes };
   }
   return null;
 };
@@ -120,8 +144,21 @@ export const finalizeFreehandDrawAction = (state: EditorStoreType): Partial<Edit
       anchorNodeDetails: null, drawingArrowFrom: null, activeTool: 'select' as const
     };
   } else if (state.drawingShapeDetails) {
+    const shapeId = state.drawingShapeDetails.id;
+    let newNodes = state.nodes;
+    if (state.activeTool === sidebarTools.TEXT) {
+      newNodes = state.nodes.map(n => {
+        if (n.id === shapeId) {
+          const width = n.width && n.width > 10 ? n.width : 180;
+          return { ...n, width };
+        }
+        return n;
+      });
+    }
     return {
-      drawingShapeDetails: null, activeTool: 'select' as const
+      nodes: newNodes,
+      drawingShapeDetails: null,
+      activeTool: 'select' as const
     };
   }
   return null;

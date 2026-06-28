@@ -5,6 +5,7 @@ import type { Edge, Node, Position } from '@xyflow/react';
 export enum ShapeNodeType {
   rectangle = "rectangle",
   ellipse = "ellipse",
+  text = "text",
 };
 
 export type ShapeNodeData = {
@@ -15,6 +16,8 @@ export type ShapeNodeData = {
   };
   bgColor?:string;
   borderColor?:string;
+  fontSize?:number;
+  textColor?:string;
 }
 
 export enum EdgeTypes {

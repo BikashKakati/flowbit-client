@@ -10,5 +10,6 @@ export type SidebarTools = {
     RECTANGLE: Tool,
     ELLIPSE:Tool,
     ARROW:Tool,
-    PAN_ZOOM:Tool
+    PAN_ZOOM:Tool,
+    TEXT:Tool
 }

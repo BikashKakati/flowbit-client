@@ -13,6 +13,7 @@ import AnchorNode from "../custom-nodes/AnchorNode";
 import EllipseNode from "../custom-nodes/ellipse/EllipseNode";
 import RectangleNode from "../custom-nodes/rectangle/RectangleNode";
 import GroupNode from "../custom-nodes/group/GroupNode";
+import TextNode from "../custom-nodes/text/TextNode";
 import ActionBar from "../action-bar/ActionBar";
 import ZoomControls from "../zoom-controls/ZoomControls";
 
@@ -24,6 +25,7 @@ const nodeTypes = {
   ellipse: EllipseNode,
   anchor: AnchorNode,
   customGroup: GroupNode,
+  text: TextNode,
 };
 
 const edgeTypes = {

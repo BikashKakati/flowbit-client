@@ -1,6 +1,6 @@
 import { Position } from '@xyflow/react';
 
-export type Tool = 'select' | 'rectangle' | 'ellipse' | 'arrow' | 'pan_zoom';
+export type Tool = 'select' | 'rectangle' | 'ellipse' | 'arrow' | 'pan_zoom' | 'text';
 
 export type ActiveToolStoreType = {
   activeTool: Tool;
