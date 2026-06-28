@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../services/api/auth-service';
 import { useAuthStore } from '../../store/auth-store';
 import { useWorkspaceStore } from '../../store/workspace-store';
-import { FlowbitLogo } from '../../components/icons/Logo';
+import { Logo } from '../../components/common/Logo';
 import { Button } from '../../components/common/Button';
 import { Loader2, ArrowLeft, LogOut, Sparkles, Check, ArrowRight } from 'lucide-react';
 import FlowbitLoader from '../../components/common/FlowbitLoader';
@@ -76,8 +76,9 @@ export default function SettingsPage() {
                             <ArrowLeft className="w-5 h-5 text-slate-400 hover:text-white" />
                         </Link>
                         <div className="flex items-center gap-2">
-                            <FlowbitLogo className="w-6 h-6" />
-                            <span className="text-xl font-bold tracking-tight">Settings</span>
+                            <Logo size="md" />
+                            <span className="text-slate-600 font-semibold mx-1">/</span>
+                            <span className="text-xl font-bold tracking-tight text-slate-200">Settings</span>
                         </div>
                     </div>
                     <Button variant="primary" onClick={() => navigate('/login')} className="flex items-center gap-2">
@@ -176,8 +177,9 @@ export default function SettingsPage() {
                         <ArrowLeft className="w-5 h-5 text-slate-400 hover:text-white" />
                     </Link>
                     <div className="flex items-center gap-2">
-                        <FlowbitLogo className="w-6 h-6" />
-                        <span className="text-xl font-bold tracking-tight">Settings</span>
+                        <Logo size="md" />
+                        <span className="text-slate-600 font-semibold mx-1">/</span>
+                        <span className="text-xl font-bold tracking-tight text-slate-200">Settings</span>
                     </div>
                 </div>
                 <Button variant="danger" onClick={handleLogout} className="flex items-center gap-2">

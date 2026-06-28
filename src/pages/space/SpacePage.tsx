@@ -1,9 +1,9 @@
-import { ArrowRight, FolderOpen, Plus, Sparkles, Settings, LogOut, Pencil, Trash2 } from "lucide-react";
+import { ArrowRight, FolderOpen, Plus, Sparkles, Settings, LogOut, Trash2 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "../../components/common/Button";
-import { FlowbitLogo } from "../../components/icons/Logo";
+import { Logo } from "../../components/common/Logo";
 import { FlowService } from "../../services/api/flow-service";
 import { SpaceService } from "../../services/api/space-service";
 import { useWorkspaceStore } from "../../store/workspace-store";
@@ -274,11 +274,8 @@ export default function SpacePage() {
             {/* LEFT SIDEBAR: Spaces */}
             <aside className="w-72 bg-slate-950 border-r border-slate-800 flex flex-col">
                 <div className="p-5 pb-8 flex items-center gap-3 border-b border-slate-800/50">
-                    <Link to="/" className="text-xl font-bold tracking-tight">
-                        Flows
-                        <span className="text-transparent bg-clip-text bg-[linear-gradient(135deg,#818cf8_0%,#a78bfa_40%,#38bdf8_100%)]">
-                            bit
-                        </span>
+                    <Link to="/" className="hover:opacity-90 transition-opacity">
+                        <Logo size="md" />
                     </Link>
                 </div>
 
@@ -300,58 +297,55 @@ export default function SpacePage() {
                                 return (
                                     <div
                                         key={s.id}
-                                        className={`group w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
+                                        onClick={() => handleSelectSpace(s.id)}
+                                        className={`group w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${isActive
                                             ? "bg-indigo-500/10 text-indigo-400"
                                             : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
                                             }`}
                                     >
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                className="w-full bg-transparent border-b border-indigo-500/50 rounded-none px-1 py-0.5 text-white focus:outline-none focus:border-indigo-500 focus:ring-0 text-sm"
-                                                value={editingSpaceName}
-                                                onChange={(e) => setEditingSpaceName(e.target.value)}
-                                                onBlur={() => finishEditingSpace(s.id)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        finishEditingSpace(s.id);
-                                                    } else if (e.key === 'Escape') {
-                                                        cancelEditingSpace();
-                                                    }
-                                                }}
-                                                onClick={(e) => e.stopPropagation()}
-                                                autoFocus
-                                            />
-                                        ) : (
-                                            <div
-                                                className="flex-1 flex items-center justify-between min-w-0"
-                                                onClick={() => handleSelectSpace(s.id)}
+                                        <div className="flex items-center gap-3 truncate flex-1 min-w-0" onClick={(e) => isEditing && e.stopPropagation()}>
+                                            <FolderOpen className={`w-4 h-4 shrink-0 ${isActive ? "text-indigo-500" : "text-slate-500"}`} />
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-transparent border-b border-indigo-500/50 rounded-none px-1 py-0.5 text-white focus:outline-none focus:border-indigo-500 focus:ring-0 text-sm"
+                                                    value={editingSpaceName}
+                                                    onChange={(e) => setEditingSpaceName(e.target.value)}
+                                                    onBlur={() => finishEditingSpace(s.id)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            finishEditingSpace(s.id);
+                                                        } else if (e.key === 'Escape') {
+                                                            cancelEditingSpace();
+                                                        }
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="flex-1 min-w-0"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        startEditingSpace(s.id, s.name);
+                                                    }}
+                                                    title="Click to rename"
+                                                >
+                                                    <span className="block truncate px-1 py-0.5 border-b border-transparent hover:border-indigo-500/50 rounded-none transition-all duration-200 cursor-text text-slate-300 hover:text-white">
+                                                        {s.name}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className={`flex items-center gap-1 shrink-0 ml-2 ${isEditing ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}>
+                                            <button
+                                                onClick={(e) => handleDeleteSpace(s.id, e)}
+                                                className="text-slate-400 hover:text-rose-400 p-1 hover:bg-slate-800 rounded transition-colors"
+                                                title="Delete space"
                                             >
-                                                <div className="flex items-center gap-3 truncate cursor-pointer flex-1">
-                                                    <FolderOpen className={`w-4 h-4 shrink-0 ${isActive ? "text-indigo-500" : "text-slate-500"}`} />
-                                                    <span className="truncate">{s.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            startEditingSpace(s.id, s.name);
-                                                        }}
-                                                        className="text-slate-400 hover:text-indigo-400 p-1 hover:bg-slate-800 rounded transition-colors"
-                                                        title="Edit name"
-                                                    >
-                                                        <Pencil className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => handleDeleteSpace(s.id, e)}
-                                                        className="text-slate-400 hover:text-rose-400 p-1 hover:bg-slate-800 rounded transition-colors"
-                                                        title="Delete space"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
                                 );
                             })
@@ -495,7 +489,7 @@ export default function SpacePage() {
                                     <div className="flex-1 bg-slate-950/50 rounded-xl mb-4 overflow-hidden relative border border-slate-800/80">
                                         <div className="absolute inset-0 opacity-10 group-hover:opacity-30 bg-gradient-to-br from-indigo-500 via-violet-500 to-cyan-500 blur-xl transition-opacity duration-500" />
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <FlowbitLogo className="w-8 h-8 opacity-20 grayscale transition-all group-hover:opacity-40 group-hover:grayscale-0" />
+                                            <Sparkles className="w-8 h-8 opacity-20 text-indigo-400 transition-all group-hover:opacity-40 group-hover:scale-110 duration-350" />
                                         </div>
                                     </div>
 
@@ -504,7 +498,7 @@ export default function SpacePage() {
                                             {editingFlowId === f.id ? (
                                                 <input
                                                     type="text"
-                                                    className="w-full bg-transparent border-b border-indigo-500/50 rounded-none px-1 py-0.5 text-white focus:outline-none focus:border-indigo-500 focus:ring-0 text-sm font-medium"
+                                                    className="w-full bg-transparent border-b border-indigo-500/50 rounded-none px-1 py-0.5 text-white focus:outline-none focus:border-indigo-500 focus:ring-0 text-base font-medium"
                                                     value={editingFlowName}
                                                     onChange={(e) => setEditingFlowName(e.target.value)}
                                                     onBlur={() => finishEditingFlow(f.id)}
@@ -519,20 +513,17 @@ export default function SpacePage() {
                                                     autoFocus
                                                 />
                                             ) : (
-                                                <div className="flex items-center gap-2 group/title">
-                                                    <h3 className="font-medium text-slate-200 group-hover:text-indigo-400 transition-colors truncate max-w-[150px]">
+                                                <div
+                                                    className="w-full cursor-text"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        startEditingFlow(f.id, f.name);
+                                                    }}
+                                                    title="Click to rename"
+                                                >
+                                                    <h3 className="w-full font-medium text-slate-200 hover:text-white px-1 py-0.5 border-b border-transparent hover:border-indigo-500/50 rounded-none transition-all duration-200 truncate">
                                                         {f.name}
                                                     </h3>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            startEditingFlow(f.id, f.name);
-                                                        }}
-                                                        className="opacity-0 group-hover/title:opacity-100 text-slate-400 hover:text-indigo-400 p-1 rounded transition-opacity"
-                                                        title="Edit name"
-                                                    >
-                                                        <Pencil className="w-3.5 h-3.5" />
-                                                    </button>
                                                 </div>
                                             )}
                                             <p className="text-xs text-slate-500 mt-1">Updated just now</p>
